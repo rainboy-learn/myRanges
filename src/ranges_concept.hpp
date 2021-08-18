@@ -61,6 +61,21 @@ namespace myranges {
     using std::same_as;
     using std::add_pointer_t;
     using std::assignable_from;
+    using std::convertible_to;
+    using std::decay_t;
+    using std::is_reference_v;
+    using std::derived_from;
+    using std::movable;
+    using std::default_initializable;
+    using std::remove_cv_t;
+    using std::is_class_v;
+    using std::tuple_size;
+    using std::integral_constant;
+    using std::remove_const_t;
+    using std::tuple_element_t;
+    using std::constructible_from;
+    using std::copyable;
+    //using namespace std;
 
 
     // std::begin
@@ -600,7 +615,7 @@ namespace myranges {
   }
   /// [range.range] The range concept.
   template<typename _Tp>
-      concept range = requires(_Tp& __t)
+      concept range = requires(_Tp& __t) // begin 和 end 要合法
       {
 	      myranges::begin(__t);
 	      myranges::end(__t);
