@@ -52,6 +52,15 @@ namespace myranges {
     using std::remove_pointer_t;
     using std::is_object_v;
     using std::contiguous_iterator;
+    using std::iter_value_t;
+    using std::iter_reference_t;
+    using std::iter_rvalue_reference_t;
+    using std::output_iterator;
+    using std::input_iterator;
+    using std::random_access_iterator;
+    using std::same_as;
+    using std::add_pointer_t;
+    using std::assignable_from;
 
 
     // std::begin
@@ -63,7 +72,7 @@ namespace myranges {
     inline constexpr bool disable_sized_range = false; //TODO 不知道有什么用
 
   template<typename _Tp>
-    inline constexpr bool enable_borrowed_range = false; //TODO 不知道有什么用
+    inline constexpr bool enable_borrowed_range = false; // 表示 默认不能 borrowed_range
 
 
   namespace __detail
@@ -81,7 +90,7 @@ namespace myranges {
 	|| same_as<_Tp, __max_diff_type>;
 
     template<integral _Tp>
-      constexpr make_unsigned_t<_Tp>
+      constexpr make_unsigned_t<_Tp>    //转成有符号数
       __to_unsigned_like(_Tp __t) noexcept
       { return __t; }
 
@@ -93,7 +102,7 @@ namespace myranges {
     // Part of the constraints of ranges::borrowed_range
     template<typename _Tp>
       concept __maybe_borrowed_range //可能从ranges 引用
-	= is_lvalue_reference_v<_Tp>
+	= is_lvalue_reference_v<_Tp>    // 是左值引用类型
 	  || enable_borrowed_range<remove_cvref_t<_Tp>>;
 
   }  // namespace __detail
@@ -102,10 +111,10 @@ namespace myranges {
   {
       //using std::ranges::__detail::__maybe_borrowed_range;
       using ::myranges::__detail::__maybe_borrowed_range;
-      using std::__detail::__class_or_enum;
-      using std::__detail::__decay_copy;
-      using std::__detail::__member_begin;
-      using std::__detail::__adl_begin;
+      using std::__detail::__class_or_enum; // 一个类 或或者 enum
+      using std::__detail::__decay_copy; // 应该是是一个 std::forward 转发
+      using std::__detail::__member_begin; // 有begin 且是 input_or_output_iterator
+      using std::__detail::__adl_begin; // __class_or_enum and __member_begin
 
       struct _Begin
       {
@@ -114,7 +123,7 @@ namespace myranges {
                   static constexpr bool
                   _S_noexcept()
                   {
-                      if constexpr (is_array_v<remove_reference_t<_Tp>>)
+                      if constexpr (is_array_v<remove_reference_t<_Tp>>) //是数组 true
                           return true;
                       else if constexpr (__member_begin<_Tp>)
                           return noexcept(__decay_copy(std::declval<_Tp&>().begin()));
@@ -589,5 +598,284 @@ namespace myranges {
     inline constexpr __cust_access::_Data data{};
     inline constexpr __cust_access::_CData cdata{};
   }
+  /// [range.range] The range concept.
+  template<typename _Tp>
+      concept range = requires(_Tp& __t)
+      {
+	      myranges::begin(__t);
+	      myranges::end(__t);
+      };
+
+  /// [range.range] The borrowed_range concept.
+  template<typename _Tp>
+      concept borrowed_range
+      = range<_Tp> && __detail::__maybe_borrowed_range<_Tp>;
+
+  template<typename _Tp>
+      using iterator_t = std::__detail::__range_iter_t<_Tp>;
+
+  template<range _Range>
+      using sentinel_t = decltype(myranges::end(std::declval<_Range&>()));
+
+  template<range _Range>
+      using range_difference_t = iter_difference_t<iterator_t<_Range>>;
+
+  template<range _Range>
+      using range_value_t = iter_value_t<iterator_t<_Range>>;
+
+  template<range _Range>
+      using range_reference_t = iter_reference_t<iterator_t<_Range>>;
+
+  template<range _Range>
+      using range_rvalue_reference_t
+      = iter_rvalue_reference_t<iterator_t<_Range>>;
+
+  /// [range.sized] The sized_range concept.
+  template<typename _Tp>
+      concept sized_range = range<_Tp>
+      && requires(_Tp& __t) { myranges::size(__t); };
+
+  template<sized_range _Range>
+      using range_size_t = decltype(myranges::size(std::declval<_Range&>()));
+
+  // [range.refinements]
+
+  /// A range for which ranges::begin returns an output iterator.
+  template<typename _Range, typename _Tp>
+      concept output_range
+      = range<_Range> && output_iterator<iterator_t<_Range>, _Tp>;
+
+  /// A range for which ranges::begin returns an input iterator.
+  template<typename _Tp>
+      concept input_range = range<_Tp> && input_iterator<iterator_t<_Tp>>;
+
+  /// A range for which ranges::begin returns a forward iterator.
+  template<typename _Tp>
+      concept forward_range
+      = input_range<_Tp> && forward_iterator<iterator_t<_Tp>>;
+
+  /// A range for which ranges::begin returns a bidirectional iterator.
+  template<typename _Tp>
+      concept bidirectional_range
+      = forward_range<_Tp> && bidirectional_iterator<iterator_t<_Tp>>;
+
+  /// A range for which ranges::begin returns a random access iterator.
+  template<typename _Tp>
+      concept random_access_range
+      = bidirectional_range<_Tp> && random_access_iterator<iterator_t<_Tp>>;
+
+  /// A range for which ranges::begin returns a contiguous iterator.
+  template<typename _Tp>
+      concept contiguous_range
+      = random_access_range<_Tp> && contiguous_iterator<iterator_t<_Tp>>
+      && requires(_Tp& __t)
+      {
+	      { myranges::data(__t) } -> same_as<add_pointer_t<range_reference_t<_Tp>>>;
+      };
+
+  /// A range for which ranges::begin and ranges::end return the same type.
+  template<typename _Tp>
+      concept common_range
+      = range<_Tp> && same_as<iterator_t<_Tp>, sentinel_t<_Tp>>;
+
+  // [range.iter.ops] range iterator operations
+
+  template<input_or_output_iterator _It>
+      constexpr void
+      advance(_It& __it, iter_difference_t<_It> __n)
+      {
+          if constexpr (random_access_iterator<_It>)
+	          __it += __n;
+          else if constexpr (bidirectional_iterator<_It>)
+	      {
+	          if (__n > 0)
+	          {
+	              do
+		          {
+		              ++__it;
+		          }
+	              while (--__n);
+	          }
+	          else if (__n < 0)
+	          {
+	              do
+		          {
+		              --__it;
+		          }
+	              while (++__n);
+	          }
+	      }
+          else
+	      {
+#ifdef __cpp_lib_is_constant_evaluated
+	          if (std::is_constant_evaluated() && __n < 0)
+	              throw "attempt to decrement a non-bidirectional iterator";
+#endif
+	          __glibcxx_assert(__n >= 0);
+	          while (__n-- > 0)
+	              ++__it;
+	      }
+      }
+
+  template<input_or_output_iterator _It, sentinel_for<_It> _Sent>
+      constexpr void
+      advance(_It& __it, _Sent __bound)
+      {
+          if constexpr (assignable_from<_It&, _Sent>)
+	          __it = std::move(__bound);
+          else if constexpr (sized_sentinel_for<_Sent, _It>)
+	          myranges::advance(__it, __bound - __it);
+          else
+	      {
+	          while (__it != __bound)
+	              ++__it;
+	      }
+      }
+
+  template<input_or_output_iterator _It, sentinel_for<_It> _Sent>
+      constexpr iter_difference_t<_It>
+      advance(_It& __it, iter_difference_t<_It> __n, _Sent __bound)
+      {
+          if constexpr (sized_sentinel_for<_Sent, _It>)
+	      {
+	          const auto __diff = __bound - __it;
+#ifdef __cpp_lib_is_constant_evaluated
+	          if (std::is_constant_evaluated()
+	                  && !(__n == 0 || __diff == 0 || (__n < 0 == __diff < 0)))
+	              throw "inconsistent directions for distance and bound";
+#endif
+	          // n and bound must not lead in opposite directions:
+	          __glibcxx_assert(__n == 0 || __diff == 0 || (__n < 0 == __diff < 0));
+	          const auto __absdiff = __diff < 0 ? -__diff : __diff;
+	          const auto __absn = __n < 0 ? -__n : __n;;
+	          if (__absn >= __absdiff)
+	          {
+	              myranges::advance(__it, __bound);
+	              return __n - __diff;
+	          }
+	          else
+	          {
+	              myranges::advance(__it, __n);
+	              return 0;
+	          }
+	      }
+          else if (__it == __bound || __n == 0)
+	          return iter_difference_t<_It>(0);
+          else if (__n > 0)
+	      {
+	          iter_difference_t<_It> __m = 0;
+	          do
+	          {
+	              ++__it;
+	              ++__m;
+	          }
+	          while (__m != __n && __it != __bound);
+	          return __n - __m;
+	      }
+          else if constexpr (bidirectional_iterator<_It> && same_as<_It, _Sent>)
+	      {
+	          iter_difference_t<_It> __m = 0;
+	          do
+	          {
+	              --__it;
+	              --__m;
+	          }
+	          while (__m != __n && __it != __bound);
+	          return __n - __m;
+	      }
+          else
+	      {
+#ifdef __cpp_lib_is_constant_evaluated
+	          if (std::is_constant_evaluated() && __n < 0)
+	              throw "attempt to decrement a non-bidirectional iterator";
+#endif
+	          __glibcxx_assert(__n >= 0);
+	          return __n;
+	      }
+      }
+
+  template<input_or_output_iterator _It, sentinel_for<_It> _Sent>
+      constexpr iter_difference_t<_It>
+      distance(_It __first, _Sent __last)
+      {
+          if constexpr (sized_sentinel_for<_Sent, _It>)
+	          return __last - __first;
+          else
+	      {
+	          iter_difference_t<_It> __n = 0;
+	          while (__first != __last)
+	          {
+	              ++__first;
+	              ++__n;
+	          }
+	          return __n;
+	      }
+      }
+
+  template<range _Range>
+      constexpr range_difference_t<_Range>
+      distance(_Range&& __r)
+      {
+          if constexpr (sized_range<_Range>)
+	          return static_cast<range_difference_t<_Range>>(myranges::size(__r));
+          else
+	          return myranges::distance(myranges::begin(__r), myranges::end(__r));
+      }
+
+  template<input_or_output_iterator _It>
+      constexpr _It
+      next(_It __x)
+      {
+          ++__x;
+          return __x;
+      }
+
+  template<input_or_output_iterator _It>
+      constexpr _It
+      next(_It __x, iter_difference_t<_It> __n)
+      {
+          myranges::advance(__x, __n);
+          return __x;
+      }
+
+  template<input_or_output_iterator _It, sentinel_for<_It> _Sent>
+      constexpr _It
+      next(_It __x, _Sent __bound)
+      {
+          myranges::advance(__x, __bound);
+          return __x;
+      }
+
+  template<input_or_output_iterator _It, sentinel_for<_It> _Sent>
+      constexpr _It
+      next(_It __x, iter_difference_t<_It> __n, _Sent __bound)
+      {
+          myranges::advance(__x, __n, __bound);
+          return __x;
+      }
+
+  template<bidirectional_iterator _It>
+      constexpr _It
+      prev(_It __x)
+      {
+          --__x;
+          return __x;
+      }
+
+  template<bidirectional_iterator _It>
+      constexpr _It
+      prev(_It __x, iter_difference_t<_It> __n)
+      {
+          myranges::advance(__x, -__n);
+          return __x;
+      }
+
+  template<bidirectional_iterator _It>
+      constexpr _It
+      prev(_It __x, iter_difference_t<_It> __n, _It __bound)
+      {
+          myranges::advance(__x, -__n, __bound);
+          return __x;
+      }
 }
 
