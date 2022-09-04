@@ -21,7 +21,7 @@ int main(){
     }
     std::cout << "\n" ;
 
-    // test 2 : drop
+    // test 2 : 创建drop实例
     // auto d = myranges::drop(2);
     // auto view1 = d(v);
     // view type std::is_same_v<>

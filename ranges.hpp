@@ -102,7 +102,10 @@ namespace myranges {
 
         }; // end struct _RangeAdaptor
            //
-           //
+
+        //use define Deduction
+        template<typename _Callable>
+        _RangeAdaptor(_Callable) -> _RangeAdaptor<_Callable>;
 
         template<typename _Callable>
         struct _RangeAdaptorClosure : public _RangeAdaptor<_Callable> {
@@ -148,5 +151,12 @@ namespace myranges {
                 return std::ranges::end(m_r);
             }
     };
+
+    namespace view {
+        __adaptor::_RangeAdaptor drop( [](){
+        });
+
+    } // end namespace view 
+
 
 } // end namespace myranges
