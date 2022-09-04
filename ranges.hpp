@@ -152,9 +152,19 @@ namespace myranges {
             }
     };
 
-    namespace view {
-        __adaptor::_RangeAdaptor drop( [](){
-        });
+    namespace views {
+        // 创建了一个 _RangeAdaptor 实例 drop
+        //  把Callable lambda 存入 drop 实例里
+        // 等待调用 drop 的 operator ()
+        //  operator () 会 创建闭包 _RangeAdaptorClosure
+        //  给 _RangeAdaptorClosure 传入的 callable 对象 是
+        //  drop.operator(__args) 中 __args 新的参数
+        //  目的就是拿到这些参数
+        __adaptor::_RangeAdaptor drop( 
+                []<std::ranges::viewable_range _Range,typename T>(_Range&& range,T&& n){
+                    return drop_view<_Range>{std::forward<_Range>(range),std::forward<T>(n)};
+                }
+        );
 
     } // end namespace view 
 
