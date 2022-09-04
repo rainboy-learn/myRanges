@@ -72,20 +72,19 @@ namespace myranges {
                 }
                 else {
                     auto __closure = 
-                    [...__args = __maybe_refwrap(std::forward<_Args>(__args))]
-                <typename _Range>(_Range&& __r)
-                {
-                    //为什么要 default construct ?
-                    return _Callable{}(
-                            std::forward<_Range>(__r),
-                            (static_cast<std::unwrap_reference_t<
-                                std::remove_const_t<decltype(__args)>>>(__args))...
-                            );
-                };
+                        [...__args = __maybe_refwrap(std::forward<_Args>(__args))]
+                        <typename _Range>(_Range&& __r)
+                        {
+                            //为什么要 default construct ?
+                            return _Callable{}(
+                                    std::forward<_Range>(__r),
+                                    (static_cast<std::unwrap_reference_t<
+                                        std::remove_const_t<decltype(__args)>>>(__args))...
+                                    );
+                        };
 
                     using _ClosureType = decltype(__closure);
                     return _RangeAdaptorClosure<_ClosureType>(std::move(__closure));
-
                 }
 
             }
@@ -128,9 +127,6 @@ namespace myranges {
     } // end namespace __adaptor
       //
 
-
-
-
     template<typename ViewRange>
     class drop_view : public view_interface<drop_view<ViewRange>>
     {
@@ -146,6 +142,10 @@ namespace myranges {
 
             auto begin(){
                 return std::ranges::next(std::ranges::begin(m_r),m_count,std::ranges::end(m_r));
+            }
+
+            auto end(){
+                return std::ranges::end(m_r);
             }
     };
 
