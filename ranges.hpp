@@ -1,5 +1,6 @@
 #include <ranges>
 #include <type_traits>
+#include <iostream>
 #include <cassert>
 #include <functional>
 #include <iterator>
@@ -76,6 +77,10 @@ namespace myranges {
                         <typename _Range>(_Range&& __r)
                         {
                             //为什么要 default construct ?
+                            //
+                            //调用的是 传的 callable 
+                            //也就是 各个 view_interface 实例
+                            // 最后产生的也就是各个 view
                             return _Callable{}(
                                     std::forward<_Range>(__r),
                                     (static_cast<std::unwrap_reference_t<
@@ -119,10 +124,15 @@ namespace myranges {
             requires std::is_invocable_v<_Callable,_Range>
             auto operator()(_Range&& __r) 
             {
-                if constexpr (std::is_default_constructible_v<_Callable>)
+                if constexpr (std::is_default_constructible_v<_Callable>){
+                    std::cout << "yes1" << std::endl;
                     return _Callable{}(std::forward<_Range>(__r));
-                else
+                }
+                else{
+                    // 这里说明 lambda 并不是 is_default_constructible_v
+                    // std::cout << "yes2" << std::endl;
                     return this->_M_callable(std::forward<_Range>(__r));
+                }
 
             }
 

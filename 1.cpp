@@ -21,10 +21,19 @@ int main(){
     }
     std::cout << "\n" ;
 
+    // ==========================
+    std::cout <<" ========================== \n";
     // test 2 : 创建drop实例
+    // drop 是 _Adaptor 实例
+    // d = drop.operator(2) 返回一个 _RangeAdaptorClosure 实例
     auto d = myranges::views::drop(2);
-    // auto view1 = d(v);
+    // view1 d.operator(_Range) 得到的最终的 drop_view 实例
+    auto view1 = d(std::move(v)); //其实调用了 _RangeAdaptorClosure.operator(viewable_range)
+
     // view type std::is_same_v<>
+    std::cout << 
+        std::is_same_v<decltype(view1), myranges::drop_view<std::vector<int, std::allocator<int>> > >
+        << std::endl;
     //
     // for( auto i :  view1){
     //      cout << i << " ";
