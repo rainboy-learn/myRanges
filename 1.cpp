@@ -31,13 +31,17 @@ int main(){
     auto view1 = d(std::move(v)); //其实调用了 _RangeAdaptorClosure.operator(viewable_range)
 
     // view type std::is_same_v<>
-    std::cout << 
-        std::is_same_v<decltype(view1), myranges::drop_view<std::vector<int, std::allocator<int>> > >
+    std::cout 
+        << 
+        "std::is_same_v<decltype(view1), myranges::drop_view<std::vector<int, std::allocator<int>> > > "
+        << "-->"
+        << std::is_same_v<decltype(view1), myranges::drop_view<std::vector<int, std::allocator<int>> > >
         << std::endl;
     //
-    // for( auto i :  view1){
-    //      cout << i << " ";
-    // }
+    std::cout <<" ========================== \n";
+    for( auto i :  view1){
+        std::cout << i << " ";
+    }
     // cout << "\n";
     //
     // test 3 operator |
