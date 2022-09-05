@@ -136,9 +136,21 @@ namespace myranges {
 
             }
 
+            template<std::ranges::viewable_range _Range>
+                friend auto operator|(_Range&& __r,const _RangeAdaptorClosure & __o) {
+                    return __o(std::forward<_Range>(__r));
+                }
+
         };
     } // end namespace __adaptor
       //
+
+    template<typename _Range>
+        requires std::is_object_v<_Range>
+    class ref_view : public view_interface<ref_view<_Range>>
+    {
+
+    };
 
     template<typename ViewRange>
     class drop_view : public view_interface<drop_view<ViewRange>>
@@ -147,6 +159,7 @@ namespace myranges {
             ViewRange m_r;
             std::ranges::range_difference_t<ViewRange> m_count;
         public:
+            constexpr 
             drop_view(ViewRange _r,std::ranges::range_difference_t<ViewRange> __count)
                 : m_r(std::move(_r)),m_count(__count)
             {

@@ -4,6 +4,7 @@
 #include "ranges.hpp"
 
 std::vector<int> v{1,2,3,4,5};
+std::vector<int> v2{1,2,3,4,5};
 int main(){
     // test 1 : drop_view
     //
@@ -42,11 +43,14 @@ int main(){
     for( auto i :  view1){
         std::cout << i << " ";
     }
-    // cout << "\n";
+    std::cout << "\n";
     //
     // test 3 operator |
     //
-    // for( auto i : v | drop(2) ) {
-    // }
+    // drop_view construct use std::move() --> compile error
+    for( auto i : v2 | myranges::views::drop(2) ) {
+        std::cout << i << " ";
+    }
+    std::cout << "\n" ;
     return 0;
 }
