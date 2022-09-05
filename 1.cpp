@@ -44,13 +44,24 @@ int main(){
         std::cout << i << " ";
     }
     std::cout << "\n";
+
+    std::cout <<" ========ref_view========== \n";
+    // test 3 ref_view
+    auto refview = myranges::ref_view (v2);
+    for(auto i : refview){
+        std::cout << i << " ";
+    }
+    std::cout << "\n";
+
+
+
     //
     // test 3 operator |
     //
     // drop_view construct use std::move() --> compile error
-    for( auto i : v2 | myranges::views::drop(2) ) {
-        std::cout << i << " ";
-    }
-    std::cout << "\n" ;
+    //for( auto i : v2 | myranges::views::drop(2) ) {
+    //    std::cout << i << " ";
+    //}
+    //std::cout << "\n" ;
     return 0;
 }

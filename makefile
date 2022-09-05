@@ -1,13 +1,14 @@
 CXX=g++
 CFLAGS= -std=c++20 -g
 
+DEP=ranges.hpp
 SRC=$(wildcard *.cpp)
 TARGET=$(patsubst %.cpp,%.out,$(SRC))
 
 all: $(TARGET)
 	@echo done
 
-%.out : %.cpp
+%.out : %.cpp $(DEP)
 	$(CXX) $(CFLAGS) -o $@ $<
 
 clean:

@@ -149,8 +149,35 @@ namespace myranges {
         requires std::is_object_v<_Range>
     class ref_view : public view_interface<ref_view<_Range>>
     {
+        private:
+            _Range * _M_r = nullptr; //指向 range的 指针
+            // 辅助的工具函数
+            static void _S_func(_Range&);
+            static void _S_func(_Range&&) = delete;
+        public:
+            ref_view() = default;
 
+            template<typename Tp>
+                //Tp 1 不能ref_view自己的引用, 2: Tp可以转成 Range& 3:Tp不能是 rvalue
+            ref_view(Tp&& t)
+            :_M_r(std::__addressof(static_cast<_Range&>(std::forward<Tp>(t))))
+             // 这里好复杂,没有直接取地址 &t
+            {}
+
+            
+
+            std::ranges::iterator_t<_Range>
+            begin() {
+                return std::ranges::begin(*_M_r);
+            }
+
+            std::ranges::sentinel_t<_Range>
+            end() {
+                return std::ranges::end(*_M_r);
+            }
     };
+    template<typename _Range>
+        ref_view(_Range&) -> ref_view<_Range>;
 
     template<typename ViewRange>
     class drop_view : public view_interface<drop_view<ViewRange>>
