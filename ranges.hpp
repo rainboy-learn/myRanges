@@ -122,7 +122,7 @@ namespace myranges {
             //重载 operator () 对给定了 range 进行操作
             template<std::ranges::viewable_range _Range>
             requires std::is_invocable_v<_Callable,_Range>
-            auto operator()(_Range&& __r) 
+            auto operator()(_Range&& __r) const
             {
                 if constexpr (std::is_default_constructible_v<_Callable>){
                     std::cout << "yes1" << std::endl;
@@ -142,6 +142,10 @@ namespace myranges {
                 }
 
         };
+
+        template<typename _Callable>
+            _RangeAdaptorClosure(_Callable) -> _RangeAdaptorClosure<_Callable>;
+
     } // end namespace __adaptor
       //
 
@@ -179,6 +183,29 @@ namespace myranges {
     template<typename _Range>
         ref_view(_Range&) -> ref_view<_Range>;
 
+    namespace views {
+        // 作用: 根据参数的类型返回不同的Ob
+        //__adaptor::_RangeAdaptorClosure all
+        constexpr auto all
+            = []<std::ranges::viewable_range _Range>(_Range&& r)
+            {
+                // 直接 返回这个
+                if constexpr (std::ranges::view<std::decay_t<_Range>>)
+                    return std::forward<_Range>(r);
+
+                //可以被 reference
+                else if constexpr (requires { ref_view{std::forward<_Range>(r)}; })
+                {
+                    return ref_view{std::forward<_Range>(r)};
+                }
+            };
+
+        // helper 得到 _range 对应 应该的类型
+        template<std::ranges::viewable_range _Range>
+            using all_t = decltype(all(std::declval<_Range>()));
+        
+    } // end namespace views
+
     template<typename ViewRange>
     class drop_view : public view_interface<drop_view<ViewRange>>
     {
@@ -202,6 +229,10 @@ namespace myranges {
             }
     };
 
+    template<typename _Range>
+        drop_view(_Range && , std::ranges::range_difference_t<_Range> __count)
+            -> drop_view<views::all_t<_Range>>;
+
     namespace views {
         // 创建了一个 _RangeAdaptor 实例 drop
         //  把Callable lambda 存入 drop 实例里
@@ -212,7 +243,7 @@ namespace myranges {
         //  目的就是拿到这些参数
         __adaptor::_RangeAdaptor drop( 
                 []<std::ranges::viewable_range _Range,typename T>(_Range&& range,T&& n){
-                    return drop_view<_Range>{std::forward<_Range>(range),std::forward<T>(n)};
+                    return drop_view{std::forward<_Range>(range),std::forward<T>(n)};
                 }
         );
 

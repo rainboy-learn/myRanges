@@ -29,16 +29,16 @@ int main(){
     // d = drop.operator(2) 返回一个 _RangeAdaptorClosure 实例
     auto d = myranges::views::drop(2);
     // view1 d.operator(_Range) 得到的最终的 drop_view 实例
-    auto view1 = d(std::move(v)); //其实调用了 _RangeAdaptorClosure.operator(viewable_range)
+    auto view1 = d(v); //其实调用了 _RangeAdaptorClosure.operator(viewable_range)
 
+     
     // view type std::is_same_v<>
     std::cout 
         << 
-        "std::is_same_v<decltype(view1), myranges::drop_view<std::vector<int, std::allocator<int>> > > "
+        "std::is_same_v<decltype(view1), myranges::drop_view<myranges::ref_view< std::vector<int, std::allocator<int>> > >>"
         << "-->"
-        << std::is_same_v<decltype(view1), myranges::drop_view<std::vector<int, std::allocator<int>> > >
+        << std::is_same_v<decltype(view1), myranges::drop_view<myranges::ref_view< std::vector<int, std::allocator<int>> > >>
         << std::endl;
-    //
     std::cout <<" ========================== \n";
     for( auto i :  view1){
         std::cout << i << " ";
@@ -54,14 +54,21 @@ int main(){
     std::cout << "\n";
 
 
+    std::cout <<" ========drop(2)(ref_view)========== \n";
+    auto v3 = myranges::views::drop(2)(std::move(refview));
+    for(auto i : v3) {
+        std::cout << i << " ";
+    }
+    std::cout << "\n" ;
 
     //
     // test 3 operator |
     //
     // drop_view construct use std::move() --> compile error
-    //for( auto i : v2 | myranges::views::drop(2) ) {
-    //    std::cout << i << " ";
-    //}
+    std::cout <<" ========operator | ================ \n";
+    for( auto i : std::move(refview) | myranges::views::drop(2) ) {
+        std::cout << i << " ";
+    }
     //std::cout << "\n" ;
     return 0;
 }
