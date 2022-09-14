@@ -42,7 +42,7 @@ namespace myranges {
         { return std::reference_wrapper<const T>{__args}; }
 
         template<typename T>
-        inline constexpr auto
+        inline constexpr decltype(auto)
         __maybe_refwrap(T && __args)
         { return std::forward<T>(__args); }
 
@@ -80,7 +80,7 @@ namespace myranges {
                             //
                             //调用的是 传的 callable 
                             //也就是 各个 view_interface 实例
-                            // 最后产生的也就是各个 view
+                            //最后产生的也就是各个 view
                             return _Callable{}(
                                     std::forward<_Range>(__r),
                                     (static_cast<std::unwrap_reference_t<
